@@ -532,8 +532,6 @@ export class ControlsClient {
           return;
         }
 
-        // TODO: See if using call(this, args) here is incorrect--it's the first
-        //  thing that made the "possibly undefined" error go away
         this.requests.get(message.req)?.(message.body);
         return;
       }
