@@ -9,22 +9,24 @@ import { useEffect } from "react";
 export const useMessaging = <T>(
   initialMessageCallback?: MessageCallback<T>
 ): UseMessagingResult => {
-  const controlsClient = useControlsClient();
+  const {
+    sendMessage,
+    sendRequest,
+    addMessageListener,
+    removeMessageListener,
+  } = useControlsClient();
 
   useEffect(() => {
     if (!initialMessageCallback) {
       return;
     }
 
-    controlsClient.addMessageListener(initialMessageCallback);
+    addMessageListener(initialMessageCallback);
 
     return () => {
-      controlsClient.removeMessageListener(initialMessageCallback);
+      removeMessageListener(initialMessageCallback);
     };
   }, [initialMessageCallback]);
 
-  return {
-    sendMessage: controlsClient.sendMessage,
-    sendRequest: controlsClient.sendRequest,
-  };
+  return { sendMessage, sendRequest };
 };
