@@ -147,6 +147,26 @@ export class ControlsClient {
     this.requests = new Map();
     this.statusListeners = new Set();
     this.status = "idle";
+
+    this.bindMethods();
+  }
+
+  /**
+   * These methods are passed around as independent functions and need to be
+   * explicitly bound to this class.
+   * <br>
+   * See
+   * https://www.freecodecamp.org/news/this-is-why-we-need-to-bind-event-handlers-in-class-components-in-react-f7ea1a6f93eb/
+   * for more background
+   * @private
+   */
+  private bindMethods() {
+    this.sendRequest = this.sendRequest.bind(this);
+    this.sendMessage = this.sendMessage.bind(this);
+    this.addMessageListener = this.addMessageListener.bind(this);
+    this.removeMessageListener = this.removeMessageListener.bind(this);
+    this.addStatusListener = this.addStatusListener.bind(this);
+    this.removeStatusListener = this.removeStatusListener.bind(this);
   }
 
   //
