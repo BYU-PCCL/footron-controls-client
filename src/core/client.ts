@@ -475,6 +475,17 @@ export class ControlsClient {
     return message as unknown as Message;
   }
 
+  private pushMessageQueue<T>(message: T) {
+    this.messageQueue?.push(message);
+
+    while (
+      this.messageQueue &&
+      this.messageQueue.length > this.messageQueueSize
+    ) {
+      this.messageQueue.shift();
+    }
+  }
+
   private onMessage(data: string) {
     const message = ControlsClient.parseMessage(data);
 
@@ -527,6 +538,7 @@ export class ControlsClient {
         return;
       }
 
+      this.pushMessageQueue(message.body);
       this.notifyMessageListeners(message.body);
       return;
     }
