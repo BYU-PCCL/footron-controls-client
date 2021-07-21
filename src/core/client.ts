@@ -519,7 +519,7 @@ export class ControlsClient {
     } as ApplicationClientMessage);
   }
 
-  clearMessageQueue(): void {
+  private clearMessageQueue(): void {
     if (this.messageQueue === undefined) {
       return;
     }
@@ -558,7 +558,7 @@ export class ControlsClient {
     });
   }
 
-  clearRequests(): void {
+  private clearRequests(): void {
     this.requests.clear();
   }
 
@@ -592,7 +592,7 @@ export class ControlsClient {
     this.messageListeners.delete(listener as MessageCallback<unknown>);
   }
 
-  clearMessageListeners(): void {
+  private clearMessageListeners(): void {
     this.messageListeners.clear();
   }
 
@@ -612,7 +612,7 @@ export class ControlsClient {
     this.statusListeners.delete(listener);
   }
 
-  clearStatusListeners(): void {
+  private clearStatusListeners(): void {
     this.statusListeners.clear();
   }
 
