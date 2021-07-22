@@ -559,7 +559,7 @@ export class ControlsClient {
 
     if (!this.connectionAppId) {
       throw Error(
-        "Router sent a non-access message but current app is unknown"
+        `Router sent an app-generated message of type '${message.type}' but current app is unknown`
       );
     }
 
