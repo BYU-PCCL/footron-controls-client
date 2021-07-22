@@ -19,6 +19,7 @@ import { PROTOCOL_VERSION } from "./constants";
 const DEFAULT_MESSAGE_QUEUE_SIZE = 256;
 const DEFAULT_LOADING_TIMEOUT_MS = 10000;
 const DEFAULT_REQUEST_TIMEOUT_MS = 10000;
+const CONNECTION_REQUEST_POLL_INTERVAL_MS = 500;
 
 // This is a higher level interface for AccessMessage
 interface AccessResult {
@@ -328,26 +329,47 @@ export class ControlsClient {
   // App connection handling
   //
 
-  private async requestAppConnection(): Promise<AccessResult> {
+  private async sendConnectionRequest(): Promise<void> {
+    console.log("sending connection request");
     await this.sendProtocolMessage({
       type: MessageType.Connect,
       app: this.clientAppId,
     } as ConnectMessage);
+  }
 
-    return new Promise<AccessResult>(
-      (resolve) =>
-        (this.accessCallback = (accessResult) => {
-          this.connectionAppId = accessResult.accepted
-            ? // We could just use this.clientAppId here but it seemed cleaner to
-              // just pass the app through the result. In a sort of vague
-              // intuitive way--without any solid rationale. So if you have a
-              // good reason to just use this.clientAppId, go for it.
-              accessResult.app
-            : undefined;
-          this.accessCallback = undefined;
-          resolve(accessResult);
-        })
+  private async requestAppConnection(): Promise<AccessResult> {
+    const connectionRequestIntervalId = setInterval(
+      this.sendConnectionRequest.bind(this),
+      CONNECTION_REQUEST_POLL_INTERVAL_MS
     );
+
+    return new Promise<AccessResult>((resolve, reject) => {
+      const connectionClosedCallback = () => {
+        removeListeners();
+        reject(
+          new Error("Connection closed while sending connection requests")
+        );
+      };
+      this.accessCallback = (accessResult) => {
+        this.connectionAppId = accessResult.accepted
+          ? // We could just use this.clientAppId here but it seemed cleaner to
+            // just pass the app through the result. In a sort of vague
+            // intuitive way--without any solid rationale. So if you have a
+            // good reason to just use this.clientAppId, go for it.
+            accessResult.app
+          : undefined;
+        removeListeners();
+        resolve(accessResult);
+      };
+
+      const removeListeners = () => {
+        clearInterval(connectionRequestIntervalId);
+        this.accessCallback = undefined;
+        this.removeStatusListener(connectionClosedCallback);
+      };
+
+      this.addStatusListener(connectionClosedCallback);
+    });
   }
 
   private async waitForFirstMessage(): Promise<void> {
