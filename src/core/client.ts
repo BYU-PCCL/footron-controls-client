@@ -533,6 +533,18 @@ export class ControlsClient {
       return;
     }
 
+    if (message.type == MessageType.Heartbeat) {
+      // TODO (AND SOON): We should really flesh out where and how we queue up
+      //  connect requests for apps that are coming online
+      if (message.app != this.clientAppId) {
+        throw Error(
+          "Received heartbeat message for an app that was not requested"
+        );
+      }
+
+      return;
+    }
+
     if (!this.connectionAppId) {
       throw Error(
         "Router sent a non-access message but current app is unknown"

@@ -31,6 +31,8 @@ interface BaseMessage {
 
 export interface HeartbeatMessage extends BaseMessage {
   type: MessageType.Heartbeat;
+  app: string;
+  up: boolean;
 }
 
 export interface ConnectMessage extends BaseMessage {
