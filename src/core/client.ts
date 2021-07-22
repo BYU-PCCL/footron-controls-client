@@ -414,6 +414,11 @@ export class ControlsClient {
     // connect forever and we wouldn't enforce a timeout until we started
     // attempting to connect to an actual app. This behavior seems fine for now,
     // just possibly a little unintuitive.
+    this.status = "loading";
+    this.notifyStatusListeners({
+      status: "loading",
+    });
+
     this.startLoadingTimeout();
     this.connectionAppId = undefined;
     if (!(await this.socketReady())) {
@@ -445,6 +450,11 @@ export class ControlsClient {
     //  by just never sending any application messages, including an empty
     //  start() message.
     this.stopLoadingTimeout();
+
+    this.status = "open";
+    this.notifyStatusListeners({
+      status: "open",
+    });
   }
 
   // TODO(vinhowe): Is there no way to tell WebStorm that this method is only
