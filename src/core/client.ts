@@ -589,6 +589,12 @@ export class ControlsClient {
   }
 
   async sendMessage<T>(body: T): Promise<void> {
+    if (this.connectionAppId == null) {
+      throw Error(
+        "Client attempted to send an application message before authenticating"
+      );
+    }
+
     await this.sendProtocolMessage({
       type: MessageType.ApplicationClient,
       body,
