@@ -397,6 +397,8 @@ export class ControlsClient {
   }
 
   private async startAppConnection(): Promise<void> {
+    // TODO: Consider breaking logic in this function out
+
     // Any messages or requests in the queue now were sent by the last app, so
     // clear them
     this.clearMessageQueue();
