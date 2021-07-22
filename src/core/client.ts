@@ -185,6 +185,14 @@ export class ControlsClient {
     this.close();
   }
 
+  private setConnectionStatus(status: ClientConnectionStatus, reason?: string) {
+    this.status = status;
+    this.notifyStatusListeners({
+      status: status,
+      reason: status == "closed" ? reason : undefined,
+    })
+  }
+
   private close(reason?: string) {
     // TODO(vinhowe): Determine if and how we go about distinguishing between
     //  protocol reasons and non-error application reasons. It could be useful
@@ -206,12 +214,7 @@ export class ControlsClient {
       return;
     }
 
-    this.status = "closed";
-    this.notifyStatusListeners({
-      status: "closed",
-      reason,
-    } as ClosedConnectionStatusResult);
-
+    this.setConnectionStatus("closed", reason)
     this.closeSocket();
     this.clearRequests();
     this.clearStatusListeners();
@@ -416,10 +419,7 @@ export class ControlsClient {
     // connect forever and we wouldn't enforce a timeout until we started
     // attempting to connect to an actual app. This behavior seems fine for now,
     // just possibly a little unintuitive.
-    this.status = "loading";
-    this.notifyStatusListeners({
-      status: "loading",
-    });
+    this.setConnectionStatus("loading")
 
     this.startLoadingTimeout();
     this.connectionAppId = undefined;
@@ -453,10 +453,7 @@ export class ControlsClient {
     //  start() message.
     this.stopLoadingTimeout();
 
-    this.status = "open";
-    this.notifyStatusListeners({
-      status: "open",
-    });
+    this.setConnectionStatus("open")
   }
 
   // TODO(vinhowe): Is there no way to tell WebStorm that this method is only
