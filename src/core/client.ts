@@ -7,7 +7,6 @@ import {
 import { v4 as uuidv4 } from "uuid";
 import {
   ClientConnectionStatus,
-  ClosedConnectionStatusResult,
   ConnectionStatusResult,
   MessageCallback,
   StatusCallback,
@@ -190,7 +189,7 @@ export class ControlsClient {
     this.notifyStatusListeners({
       status: status,
       reason: status == "closed" ? reason : undefined,
-    })
+    });
   }
 
   private close(reason?: string) {
@@ -214,7 +213,7 @@ export class ControlsClient {
       return;
     }
 
-    this.setConnectionStatus("closed", reason)
+    this.setConnectionStatus("closed", reason);
     this.closeSocket();
     this.clearRequests();
     this.clearStatusListeners();
@@ -419,7 +418,7 @@ export class ControlsClient {
     // connect forever and we wouldn't enforce a timeout until we started
     // attempting to connect to an actual app. This behavior seems fine for now,
     // just possibly a little unintuitive.
-    this.setConnectionStatus("loading")
+    this.setConnectionStatus("loading");
 
     this.startLoadingTimeout();
     this.connectionAppId = undefined;
@@ -453,7 +452,7 @@ export class ControlsClient {
     //  start() message.
     this.stopLoadingTimeout();
 
-    this.setConnectionStatus("open")
+    this.setConnectionStatus("open");
   }
 
   // TODO(vinhowe): Is there no way to tell WebStorm that this method is only
