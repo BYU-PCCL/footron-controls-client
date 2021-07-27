@@ -4,6 +4,7 @@ import { terser } from "rollup-plugin-terser";
 import size from "rollup-plugin-size";
 import externalDeps from "rollup-plugin-peer-deps-external";
 import resolve from "rollup-plugin-node-resolve";
+import commonJS from "rollup-plugin-commonjs";
 import replace from "@rollup/plugin-replace";
 
 const external = ["react", "react-dom"];
@@ -34,7 +35,12 @@ export default inputSrcs
           globals,
         },
         external,
-        plugins: [resolve(resolveConfig), babel(babelConfig), externalDeps()],
+        plugins: [
+          resolve(resolveConfig),
+          babel(babelConfig),
+          commonJS(),
+          externalDeps(),
+        ],
       },
       {
         input: input,
@@ -54,6 +60,7 @@ export default inputSrcs
           }),
           resolve(resolveConfig),
           babel(babelConfig),
+          commonJS(),
           externalDeps(),
           terser(),
           size(),

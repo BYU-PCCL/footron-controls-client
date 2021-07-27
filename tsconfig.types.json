@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "declaration": true,
+    "declarationDir": "./types",
+    "emitDeclarationOnly": true,
+    "noEmit": false,
+    "paths": {
+      "@footron/controls-client": ["./src/index.ts"]
+    }
+  },
+  "files": ["./src/index.ts"],
+  "exclude": ["./src/**/*"]
+}
