@@ -1,6 +1,7 @@
 import {
   ApplicationClientMessage,
   ConnectMessage,
+  LifecycleMessage,
   Message,
   MessageType,
 } from "./messages";
@@ -167,6 +168,8 @@ export class ControlsClient {
     this.removeMessageListener = this.removeMessageListener.bind(this);
     this.addStatusListener = this.addStatusListener.bind(this);
     this.removeStatusListener = this.removeStatusListener.bind(this);
+    this.pause = this.pause.bind(this);
+    this.unpause = this.unpause.bind(this);
   }
 
   //
@@ -638,6 +641,31 @@ export class ControlsClient {
 
   private clearRequests(): void {
     this.requests.clear();
+  }
+
+  //
+  // Client lifecycle
+  //
+
+  private async setPaused(paused: boolean) {
+    if (this.connectionAppId == null) {
+      throw Error(
+        "Client attempted to send a lifecycle message before authenticating"
+      );
+    }
+
+    await this.sendProtocolMessage({
+      type: MessageType.Lifecycle,
+      paused,
+    } as LifecycleMessage);
+  }
+
+  async pause(): Promise<void> {
+    await this.setPaused(true);
+  }
+
+  async unpause(): Promise<void> {
+    await this.setPaused(false);
   }
 
   //
