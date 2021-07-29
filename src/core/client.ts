@@ -177,6 +177,8 @@ export class ControlsClient {
     this.removeMessageListener = this.removeMessageListener.bind(this);
     this.addStatusListener = this.addStatusListener.bind(this);
     this.removeStatusListener = this.removeStatusListener.bind(this);
+    this.getClientAppId = this.getClientAppId.bind(this);
+    this.getConnectionAppId = this.getConnectionAppId.bind(this);
     this.pause = this.pause.bind(this);
     this.unpause = this.unpause.bind(this);
   }
@@ -478,6 +480,14 @@ export class ControlsClient {
 
     this.clientAppId = appId;
     return this.startAppConnection();
+  }
+
+  getClientAppId(): string | undefined {
+    return this.clientAppId;
+  }
+
+  getConnectionAppId(): string | undefined {
+    return this.connectionAppId;
   }
 
   //
