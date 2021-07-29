@@ -39,6 +39,10 @@ interface ControlsClientConfig {
   messageQueue?: boolean | MessageQueueConfig;
 }
 
+interface MessageCallbackInfo {
+  ignoreEmptyInitialMessage: boolean;
+}
+
 // TODO: See which parts of this class can be encapsulated
 /**
  * Provides an API for sending/receiving messages with a router and managing a
@@ -78,6 +82,10 @@ export class ControlsClient {
   private readonly messageQueueSize: number;
   private readonly messageQueue?: unknown[];
   private readonly messageListeners: Set<MessageCallback<unknown>>;
+  private readonly messageListenersInfo: Map<
+    MessageCallback<unknown>,
+    MessageCallbackInfo
+  >;
   private readonly statusListeners: Set<StatusCallback>;
   private readonly requests: Map<string, MessageCallback<unknown>>;
   private accessCallback?: AccessCallback;
@@ -145,6 +153,7 @@ export class ControlsClient {
       : undefined;
 
     this.messageListeners = new Set();
+    this.messageListenersInfo = new Map();
     this.requests = new Map();
     this.statusListeners = new Set();
     this.status = "idle";
@@ -674,16 +683,27 @@ export class ControlsClient {
 
   /**
    * Add a listener for messages from the current app
-   * @param listener
-   * @param queueCount number of messages back to receive; silently limited by
-   * size and existence of internal queue, and if unset will send _all_ messages
-   * in queue to listener
+   * @param listener callback to listen for messages
+   * @param options
+   *
+   * - queueCount: number of messages back to receive; silently limited by
+   *   size and existence of internal queue, and if unset will send _all_ messages
+   *   in queue to listener
+   * - ignoreEmptyInitialMessage: whether to ignore the special empty initial
+   *   message type
    */
   addMessageListener<T>(
     listener: MessageCallback<T>,
-    queueCount = this.messageQueueSize
+    options?: { ignoreEmptyInitialMessage: boolean; queueCount: number }
   ): void {
+    const ignoreEmptyInitialMessage =
+      options?.ignoreEmptyInitialMessage || true;
+    const queueCount = options?.queueCount || this.messageQueueSize;
+
     this.messageListeners.add(listener as MessageCallback<unknown>);
+    this.messageListenersInfo.set(listener as MessageCallback<unknown>, {
+      ignoreEmptyInitialMessage,
+    });
 
     if (!queueCount || !this.messageQueue) {
       return;
@@ -696,14 +716,36 @@ export class ControlsClient {
 
   removeMessageListener<T>(listener: MessageCallback<T>): void {
     this.messageListeners.delete(listener as MessageCallback<unknown>);
+    this.messageListenersInfo.delete(listener as MessageCallback<unknown>);
   }
 
   private clearMessageListeners(): void {
     this.messageListeners.clear();
+    this.messageListenersInfo.clear();
   }
 
   private notifyMessageListeners<T>(message: T) {
-    this.messageListeners.forEach((listener) => listener(message));
+    let listeners: Set<MessageCallback<T>> | MessageCallback<T>[] =
+      this.messageListeners;
+
+    // Check if value is an object in JavaScript:
+    // https://stackoverflow.com/a/8511350
+    if (
+      typeof message === "object" &&
+      message !== null &&
+      !Array.isArray(message) &&
+      "__start" in message
+    ) {
+      listeners = Array.from(listeners).filter(
+        (listener) =>
+          !(
+            this.messageListenersInfo.get(listener as MessageCallback<unknown>)
+              ?.ignoreEmptyInitialMessage || true
+          )
+      );
+    }
+
+    listeners.forEach((listener) => listener(message));
   }
 
   //
