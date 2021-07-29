@@ -494,7 +494,7 @@ export class ControlsClient {
   // Message handling
   //
 
-  private async sendProtocolMessage(message: Message) {
+  private async sendProtocolMessage(message: Omit<Message, "version">) {
     if (!(await this.socketReady())) {
       // TODO: Do we want to queue up messages and wait for the socket to be
       //  available again? Or does our little CONNECTING await in socketReady
