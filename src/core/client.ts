@@ -681,6 +681,7 @@ export class ControlsClient {
 
   async pause(): Promise<void> {
     await this.setPaused(true);
+    await this.clearMessageQueue();
   }
 
   async unpause(): Promise<void> {
