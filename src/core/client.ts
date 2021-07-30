@@ -409,7 +409,9 @@ export class ControlsClient {
         this.removeStatusListener(connectionClosedCallback);
       };
 
-      this.addMessageListener(firstMessageCallback);
+      this.addMessageListener(firstMessageCallback, {
+        ignoreEmptyInitialMessage: false,
+      });
       this.addStatusListener(connectionClosedCallback);
     });
   }
@@ -603,7 +605,10 @@ export class ControlsClient {
         return;
       }
 
-      this.pushMessageQueue(message.body);
+      if (!ControlsClient.messageIsEmptyInitial(message.body)) {
+        this.pushMessageQueue(message.body);
+      }
+
       this.notifyMessageListeners(message.body);
       return;
     }
@@ -712,11 +717,11 @@ export class ControlsClient {
    */
   addMessageListener<T>(
     listener: MessageCallback<T>,
-    options?: { ignoreEmptyInitialMessage: boolean; queueCount: number }
+    options?: { ignoreEmptyInitialMessage?: boolean; queueCount?: number }
   ): void {
     const ignoreEmptyInitialMessage =
-      options?.ignoreEmptyInitialMessage || true;
-    const queueCount = options?.queueCount || this.messageQueueSize;
+      options?.ignoreEmptyInitialMessage ?? true;
+    const queueCount = options?.queueCount ?? this.messageQueueSize;
 
     this.messageListeners.add(listener as MessageCallback<unknown>);
     this.messageListenersInfo.set(listener as MessageCallback<unknown>, {
@@ -737,6 +742,15 @@ export class ControlsClient {
     this.messageListenersInfo.delete(listener as MessageCallback<unknown>);
   }
 
+  private static messageIsEmptyInitial<T>(message: T) {
+    return (
+      typeof message === "object" &&
+      message !== null &&
+      !Array.isArray(message) &&
+      "__start" in message
+    );
+  }
+
   private clearMessageListeners(): void {
     this.messageListeners.clear();
     this.messageListenersInfo.clear();
@@ -748,17 +762,12 @@ export class ControlsClient {
 
     // Check if value is an object in JavaScript:
     // https://stackoverflow.com/a/8511350
-    if (
-      typeof message === "object" &&
-      message !== null &&
-      !Array.isArray(message) &&
-      "__start" in message
-    ) {
+    if (ControlsClient.messageIsEmptyInitial(message)) {
       listeners = Array.from(listeners).filter(
         (listener) =>
           !(
             this.messageListenersInfo.get(listener as MessageCallback<unknown>)
-              ?.ignoreEmptyInitialMessage || true
+              ?.ignoreEmptyInitialMessage ?? true
           )
       );
     }
