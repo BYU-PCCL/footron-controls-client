@@ -79,6 +79,7 @@ export class ControlsClient {
    * to run, which can be different than the app that is currently running.
    */
   private clientAppId?: string;
+  private paused: boolean;
   private readonly messageQueueSize: number;
   private readonly messageQueue?: unknown[];
   private readonly messageListeners: Set<MessageCallback<unknown>>;
@@ -152,6 +153,7 @@ export class ControlsClient {
       ? new Array(this.messageQueueSize)
       : undefined;
 
+    this.paused = false;
     this.messageListeners = new Set();
     this.messageListenersInfo = new Map();
     this.requests = new Map();
@@ -451,6 +453,7 @@ export class ControlsClient {
       return;
     }
 
+    await this.sendLifecycleMessage(this.paused);
     await this.waitForFirstMessage();
     // TODO(vinhowe) (and this is relatively important too): technically
     //  we've scoped the controls client to exist for the duration of an
@@ -666,17 +669,21 @@ export class ControlsClient {
   // Client lifecycle
   //
 
-  private async setPaused(paused: boolean) {
-    if (this.connectionAppId == null) {
-      throw Error(
-        "Client attempted to send a lifecycle message before authenticating"
-      );
-    }
-
+  private async sendLifecycleMessage(paused: boolean) {
     await this.sendProtocolMessage({
       type: MessageType.Lifecycle,
       paused,
     } as LifecycleMessage);
+  }
+
+  private async setPaused(paused: boolean) {
+    this.paused = paused;
+
+    if (this.connectionAppId == null) {
+      return;
+    }
+
+    await this.sendLifecycleMessage(paused);
   }
 
   async pause(): Promise<void> {
