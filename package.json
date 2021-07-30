@@ -1,7 +1,7 @@
 {
   "// based on": "https://github.com/tannerlinsley/react-query/blob/7a628d6497e6f71242f9af84de46997083f12549/package.json",
   "name": "@footron/controls-client",
-  "version": "0.1.0",
+  "version": "0.1.12",
   "author": "BYU PCCL",
   "license": "MIT",
   "main": "lib/index.js",
@@ -15,10 +15,7 @@
     "build:types": "rimraf ./types && tsc --project ./tsconfig.types.json && replace 'import type' 'import' ./types -r --silent && replace 'export type' 'export' ./types -r --silent",
     "build": "yarn build:commonjs && yarn build:es && yarn build:umd && yarn build:types",
     "format": "yarn prettier --write",
-    "prepare": "husky install",
-    "postinstall": "husky install",
-    "prepublishOnly": "pinst --disable",
-    "postpublish": "pinst --enable"
+    "husky-install": "husky install"
   },
   "devDependencies": {
     "@babel/cli": "^7.14.8",
