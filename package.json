@@ -5,7 +5,7 @@
   "author": "BYU PCCL",
   "license": "MIT",
   "main": "lib/index.js",
-  "unpkg": "dist/react-query.development.js",
+  "unpkg": "dist/controls-client.development.js",
   "types": "types/index.d.ts",
   "module": "es/index.js",
   "scripts": {
