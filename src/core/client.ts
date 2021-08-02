@@ -526,7 +526,7 @@ export class ControlsClient {
     }
 
     if (!("type" in message) || typeof message["type"] !== "string") {
-      throw Error("Message received from router doesn't specify valid type");
+      throw Error("Message received from router didn't specify valid type");
     }
 
     return message as unknown as Message;
