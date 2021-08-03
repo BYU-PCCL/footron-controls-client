@@ -18,7 +18,7 @@ export const useControlsClient = (): ControlsClient => {
 };
 
 export interface ControlsClientProviderProps {
-  client?: ControlsClient;
+  client?: ControlsClient | undefined;
 }
 
 export const ControlsClientProvider = ({
