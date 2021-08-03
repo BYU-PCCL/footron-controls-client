@@ -9,12 +9,20 @@ import { useEffect } from "react";
 export const useMessaging = <T>(
   initialMessageCallback?: MessageCallback<T>
 ): UseMessagingResult => {
+  const controlsClient = useControlsClient();
+
+  if (!controlsClient) {
+    throw Error(
+      "No ControlsClient available, use ControlsClientProvider to set one."
+    );
+  }
+
   const {
     sendMessage,
     sendRequest,
     addMessageListener,
     removeMessageListener,
-  } = useControlsClient();
+  } = controlsClient;
 
   useEffect(() => {
     if (!initialMessageCallback) {
