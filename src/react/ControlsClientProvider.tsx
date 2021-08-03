@@ -1,4 +1,4 @@
-import { ControlsClient } from "../core/client";
+import { ControlsClient } from "../core";
 import React from "react";
 
 const ControlsClientContext = React.createContext<ControlsClient | undefined>(
