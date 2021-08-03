@@ -5,16 +5,8 @@ const ControlsClientContext = React.createContext<ControlsClient | undefined>(
   undefined
 );
 
-export const useControlsClient = (): ControlsClient => {
-  const controlsClient = React.useContext(ControlsClientContext);
-
-  if (!controlsClient) {
-    throw new Error(
-      "No ControlsClient set, use ControlsClientProvider to set one"
-    );
-  }
-
-  return controlsClient;
+export const useControlsClient = (): ControlsClient | undefined => {
+  return React.useContext(ControlsClientContext);
 };
 
 export interface ControlsClientProviderProps {
