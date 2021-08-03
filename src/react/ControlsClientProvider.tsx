@@ -18,7 +18,7 @@ export const useControlsClient = (): ControlsClient => {
 };
 
 export interface ControlsClientProviderProps {
-  client: ControlsClient;
+  client?: ControlsClient;
 }
 
 export const ControlsClientProvider = ({
@@ -27,6 +27,9 @@ export const ControlsClientProvider = ({
 }: React.PropsWithChildren<ControlsClientProviderProps>): JSX.Element => {
   const existingContext = React.useContext(ControlsClientContext);
   React.useEffect(() => {
+    if (client == null) {
+      return;
+    }
     if (existingContext != null) {
       throw new Error(
         "Attempted to create a ControlsClientProvider inside of an existing ControlsClientProvider--this is not allowed"
