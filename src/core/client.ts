@@ -481,12 +481,18 @@ export class ControlsClient {
   //  consumed as part of a library interface? It doesn't matter that we don't
   //  use it, unless WebStorm is subtly trying to tell us to write tests.
   // noinspection JSUnusedGlobalSymbols
+  /**
+   * Note that this method is not idempotent, because it's possible to be in a
+   * position where the new app ID is the same as the last controls app called
+   * even though different instances have been launched.
+   */
   async setApp(appId: string | null): Promise<void> {
-    if (this.clientAppId === appId) {
+    this.clientAppId = appId;
+
+    if (appId == null) {
       return;
     }
 
-    this.clientAppId = appId;
     return this.startAppConnection();
   }
 
