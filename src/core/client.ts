@@ -204,6 +204,10 @@ export class ControlsClient {
   }
 
   private setConnectionStatus(status: ClientConnectionStatus, reason?: string) {
+    if (status === this.status) {
+      return;
+    }
+
     this.status = status;
     this.notifyStatusListeners({
       status: status,
