@@ -73,12 +73,12 @@ export class ControlsClient {
    * ID of currently connected app--mirrors state in router and is undefined
    * when a connection is in progress or a connection request was denied
    */
-  private connectionAppId?: string;
+  private connectionAppId: string | null;
   /**
    * ID of _requested_ app as specified by the client. This is the app we want
    * to run, which can be different than the app that is currently running.
    */
-  private clientAppId?: string;
+  private clientAppId: string | null;
   private paused: boolean;
   private readonly messageQueueSize: number;
   private readonly messageQueue?: unknown[];
@@ -159,6 +159,9 @@ export class ControlsClient {
     this.requests = new Map();
     this.statusListeners = new Set();
     this.status = "idle";
+
+    this.clientAppId = null;
+    this.connectionAppId = null;
 
     this.bindMethods();
   }
@@ -374,8 +377,8 @@ export class ControlsClient {
             // just pass the app through the result. In a sort of vague
             // intuitive way--without any solid rationale. So if you have a
             // good reason to just use this.clientAppId, go for it.
-            accessResult.app
-          : undefined;
+            accessResult.app ?? null
+          : null;
         removeListeners();
         resolve(accessResult);
       };
@@ -439,7 +442,7 @@ export class ControlsClient {
     this.setConnectionStatus("loading");
 
     this.startLoadingTimeout();
-    this.connectionAppId = undefined;
+    this.connectionAppId = null;
     if (!(await this.socketReady())) {
       // TODO: Do we want to queue up messages and wait for the socket to be
       //  available again? Or does our little CONNECTING await in socketReady
@@ -478,7 +481,7 @@ export class ControlsClient {
   //  consumed as part of a library interface? It doesn't matter that we don't
   //  use it, unless WebStorm is subtly trying to tell us to write tests.
   // noinspection JSUnusedGlobalSymbols
-  async setApp(appId: string): Promise<void> {
+  async setApp(appId: string | null): Promise<void> {
     if (this.clientAppId === appId) {
       return;
     }
@@ -487,11 +490,11 @@ export class ControlsClient {
     return this.startAppConnection();
   }
 
-  getClientAppId(): string | undefined {
+  getClientAppId(): string | null {
     return this.clientAppId;
   }
 
-  getConnectionAppId(): string | undefined {
+  getConnectionAppId(): string | null {
     return this.connectionAppId;
   }
 
