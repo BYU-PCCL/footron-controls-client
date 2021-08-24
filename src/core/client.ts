@@ -13,6 +13,7 @@ import {
   StatusCallback,
 } from "./types";
 import { PROTOCOL_VERSION } from "./constants";
+import { CancelledError } from "./errors";
 
 // This number is totally arbitrary and doesn't neatly map to any specific
 // memory constraint
@@ -362,6 +363,35 @@ export class ControlsClient {
     } as ConnectMessage);
   }
 
+  private static cancellableConnectionStatusCallback(
+    reject: (value: Error) => void,
+    removeListeners: () => void
+  ) {
+    return (result: ConnectionStatusResult) => {
+      removeListeners();
+
+      if (result.status === "closed") {
+        reject(
+          new Error(
+            "Connection closed while waiting for first application message"
+          )
+        );
+        return;
+      }
+
+      if (result.status === "idle") {
+        reject(new CancelledError());
+        return;
+      }
+
+      reject(
+        new Error(
+          `Connection status changed illegally to '${result.status}' while attempting to connect to an app--this should not happen`
+        )
+      );
+    };
+  }
+
   private async requestAppConnection(): Promise<AccessResult> {
     const connectionRequestIntervalId = setInterval(
       this.sendConnectionRequest.bind(this),
@@ -369,12 +399,6 @@ export class ControlsClient {
     );
 
     return new Promise<AccessResult>((resolve, reject) => {
-      const connectionClosedCallback = () => {
-        removeListeners();
-        reject(
-          new Error("Connection closed while sending connection requests")
-        );
-      };
       this.accessCallback = (accessResult) => {
         this.connectionAppId = accessResult.accepted
           ? // We could just use this.clientAppId here but it seemed cleaner to
@@ -390,10 +414,16 @@ export class ControlsClient {
       const removeListeners = () => {
         clearInterval(connectionRequestIntervalId);
         this.accessCallback = undefined;
-        this.removeStatusListener(connectionClosedCallback);
+        this.removeStatusListener(connectionStatusCallback);
       };
 
-      this.addStatusListener(connectionClosedCallback);
+      const connectionStatusCallback =
+        ControlsClient.cancellableConnectionStatusCallback(
+          reject,
+          removeListeners
+        );
+
+      this.addStatusListener(connectionStatusCallback);
     });
   }
 
@@ -403,23 +433,22 @@ export class ControlsClient {
         removeListeners();
         resolve();
       };
-      const connectionClosedCallback = () => {
-        removeListeners();
-        reject(
-          new Error(
-            "Connection closed while waiting for first application message"
-          )
-        );
-      };
+
       const removeListeners = () => {
         this.removeMessageListener(firstMessageCallback);
-        this.removeStatusListener(connectionClosedCallback);
+        this.removeStatusListener(connectionStatusCallback);
       };
+
+      const connectionStatusCallback =
+        ControlsClient.cancellableConnectionStatusCallback(
+          reject,
+          removeListeners
+        );
 
       this.addMessageListener(firstMessageCallback, {
         ignoreEmptyInitialMessage: false,
       });
-      this.addStatusListener(connectionClosedCallback);
+      this.addStatusListener(connectionStatusCallback);
     });
   }
 
@@ -445,40 +474,51 @@ export class ControlsClient {
     // just possibly a little unintuitive.
     this.setConnectionStatus("loading");
 
-    this.startLoadingTimeout();
-    this.connectionAppId = null;
-    if (!(await this.socketReady())) {
-      // TODO: Do we want to queue up messages and wait for the socket to be
-      //  available again? Or does our little CONNECTING await in socketReady
-      //  basically provide that behavior for all of the states we care about?
-      throw Error(
-        "Couldn't couldn't start app connection because socket is not available"
-      );
+    try {
+      this.startLoadingTimeout();
+      this.connectionAppId = null;
+      if (!(await this.socketReady())) {
+        // TODO: Do we want to queue up messages and wait for the socket to be
+        //  available again? Or does our little CONNECTING await in socketReady
+        //  basically provide that behavior for all of the states we care about?
+        // noinspection ExceptionCaughtLocallyJS
+        throw Error(
+          "Couldn't couldn't start app connection because socket is not available"
+        );
+      }
+
+      const accessResult = await this.requestAppConnection();
+      if (!accessResult.accepted) {
+        this.close(accessResult.reason);
+        return;
+      }
+
+      await this.sendLifecycleMessage(this.paused);
+      await this.waitForFirstMessage();
+      // TODO(vinhowe) (and this is relatively important too): technically
+      //  we've scoped the controls client to exist for the duration of an
+      //  auth code, so moving to the closed state for what could be an issue
+      //  with the app itself is a violation of that scope _assuming the app
+      //  doesn't have a lock_.
+      //  Every potential "security hole" available to
+      //  app developers comes with the caveat that in our case they're
+      //  trustworthy people we have professional relationships with, but an
+      //  app developer could potentially exploit this undocumented behavior
+      //  to deny access to users individually _without requesting a lock_
+      //  by just never sending any application messages, including an empty
+      //  start() message.
+      this.stopLoadingTimeout();
+
+      this.setConnectionStatus("open");
+    } catch (e) {
+      if (e instanceof CancelledError) {
+        console.debug("Cancelled an active app connection request");
+        this.stopLoadingTimeout();
+        return;
+      }
+
+      throw e;
     }
-
-    const accessResult = await this.requestAppConnection();
-    if (!accessResult.accepted) {
-      this.close(accessResult.reason);
-      return;
-    }
-
-    await this.sendLifecycleMessage(this.paused);
-    await this.waitForFirstMessage();
-    // TODO(vinhowe) (and this is relatively important too): technically
-    //  we've scoped the controls client to exist for the duration of an
-    //  auth code, so moving to the closed state for what could be an issue
-    //  with the app itself is a violation of that scope _assuming the app
-    //  doesn't have a lock_.
-    //  Every potential "security hole" available to
-    //  app developers comes with the caveat that in our case they're
-    //  trustworthy people we have professional relationships with, but an
-    //  app developer could potentially exploit this undocumented behavior
-    //  to deny access to users individually _without requesting a lock_
-    //  by just never sending any application messages, including an empty
-    //  start() message.
-    this.stopLoadingTimeout();
-
-    this.setConnectionStatus("open");
   }
 
   // TODO(vinhowe): Is there no way to tell WebStorm that this method is only
@@ -494,6 +534,8 @@ export class ControlsClient {
     this.clientAppId = appId;
 
     if (appId == null) {
+      // This will cancel any active app-pending promise
+      this.setConnectionStatus("idle");
       return;
     }
 
