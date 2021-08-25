@@ -730,6 +730,10 @@ export class ControlsClient {
   //
 
   private async sendLifecycleMessage(paused: boolean) {
+    if (this.connectionAppId == null) {
+      return;
+    }
+
     await this.sendProtocolMessage({
       type: MessageType.Lifecycle,
       paused,
@@ -738,10 +742,6 @@ export class ControlsClient {
 
   private async setPaused(paused: boolean) {
     this.paused = paused;
-
-    if (this.connectionAppId == null) {
-      return;
-    }
 
     await this.sendLifecycleMessage(paused);
   }
