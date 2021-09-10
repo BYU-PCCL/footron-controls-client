@@ -187,6 +187,7 @@ export class ControlsClient {
     this.getConnectionAppId = this.getConnectionAppId.bind(this);
     this.pause = this.pause.bind(this);
     this.unpause = this.unpause.bind(this);
+    this.visibilityHandler = this.visibilityHandler.bind(this);
   }
 
   //
@@ -198,6 +199,7 @@ export class ControlsClient {
     // Note that consumers of this class will have to also call setApp to
     //  attempt an actual connection request, and to enter the loading state
     this.openSocket();
+    document.addEventListener("visibilitychange", this.visibilityHandler);
   }
 
   unmount(): void {
@@ -277,11 +279,25 @@ export class ControlsClient {
     this.socket.addEventListener("close", this.onSocketClose);
   }
 
+  private async visibilityHandler() {
+    if (document.hidden) {
+      this.closeSocket();
+    } else if (this.clientAppId) {
+      this.openSocket();
+      await this.startAppConnection();
+    }
+  }
+
   private closeSocket() {
     if (this.socket === undefined) {
       return;
     }
 
+    // If status is closed, we don't want visibility listener to try to start
+    // things back up again
+    if (this.status == "closed") {
+      document.removeEventListener("visibilitychange", this.visibilityHandler);
+    }
     // We're closing the socket manually here, so we don't want onSocketClose to
     // try reopening it
     this.socket.removeEventListener("close", this.onSocketClose);
