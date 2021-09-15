@@ -150,6 +150,8 @@ export class ControlsClient {
       config?.messageQueue.size
         ? config?.messageQueue.size
         : DEFAULT_MESSAGE_QUEUE_SIZE;
+    // TODO: Actually handle no message queue--this will always give us a
+    //  message queue
     this.messageQueue = this.messageQueueSize
       ? new Array(this.messageQueueSize)
       : undefined;
