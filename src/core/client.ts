@@ -271,6 +271,7 @@ export class ControlsClient {
     }
 
     clearTimeout(this.loadingTimeoutId);
+    this.loadingTimeoutId = undefined;
   }
 
   //
