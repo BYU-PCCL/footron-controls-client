@@ -253,6 +253,9 @@ export class ControlsClient {
   //
 
   private startLoadingTimeout() {
+    // Make sure that we're not just going to replace loadingTimeoutId and time
+    // out anyway
+    this.stopLoadingTimeout();
     this.loadingTimeoutId = setTimeout(
       () =>
         // TODO: Keep in mind this message is shown to end users--it could be too
