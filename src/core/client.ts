@@ -551,9 +551,12 @@ export class ControlsClient {
   async setApp(appId: string | null): Promise<void> {
     this.clientAppId = appId;
 
+    // Setting connection status to idle should cancel any existing app
+    // connection requests
+    this.setConnectionStatus("idle");
+
     if (appId == null) {
       // This will cancel any active app-pending promise
-      this.setConnectionStatus("idle");
       this.connectionAppId = null;
       return;
     }
