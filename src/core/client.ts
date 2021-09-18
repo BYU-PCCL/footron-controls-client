@@ -552,6 +552,7 @@ export class ControlsClient {
     this.clientAppId = appId;
 
     if (appId == null) {
+      this.connectionAppId = null;
       // This will cancel any active app-pending promise
       this.setConnectionStatus("idle");
       return;
