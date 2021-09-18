@@ -550,9 +550,12 @@ export class ControlsClient {
    */
   async setApp(appId: string | null): Promise<void> {
     this.clientAppId = appId;
+    // We need to reset this here because the frontend uses it to check if the
+    // current app switched and we'll get fights between the frontend and the
+    // timer if connectionAppId is an old value
+    this.connectionAppId = null;
 
     if (appId == null) {
-      this.connectionAppId = null;
       // This will cancel any active app-pending promise
       this.setConnectionStatus("idle");
       return;
