@@ -1,7 +1,7 @@
 {
   "// based on": "https://github.com/tannerlinsley/react-query/blob/7a628d6497e6f71242f9af84de46997083f12549/package.json",
   "name": "@footron/controls-client",
-  "version": "0.1.27",
+  "version": "0.1.28",
   "author": "BYU PCCL",
   "license": "MIT",
   "main": "lib/index.js",
