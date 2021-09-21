@@ -285,7 +285,6 @@ export class ControlsClient {
     this.socket = new WebSocket(this.endpoint + (this.authCode || ""));
     this.socket.addEventListener("message", this.onMessage);
     this.socket.addEventListener("close", this.onSocketClose);
-    this.socket.addEventListener("error", this.onSocketClose);
   }
 
   private async visibilityHandler() {
@@ -322,7 +321,6 @@ export class ControlsClient {
 
     this.socket?.removeEventListener("message", this.onMessage);
     this.socket?.removeEventListener("close", this.onSocketClose);
-    this.socket?.removeEventListener("error", this.onSocketClose);
 
     console.warn("Footron socket closed, attempting to reconnect in 1s");
     // Status is idle, loading, or open, so we'll retry opening the socket
