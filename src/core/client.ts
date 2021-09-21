@@ -180,6 +180,8 @@ export class ControlsClient {
    */
   private bindMethods() {
     this.sendRequest = this.sendRequest.bind(this);
+    this.onSocketClose = this.onSocketClose.bind(this);
+    this.openSocket = this.openSocket.bind(this);
     this.sendMessage = this.sendMessage.bind(this);
     this.addMessageListener = this.addMessageListener.bind(this);
     this.removeMessageListener = this.removeMessageListener.bind(this);
@@ -281,8 +283,9 @@ export class ControlsClient {
   private openSocket() {
     // TODO: Handle retries here
     this.socket = new WebSocket(this.endpoint + (this.authCode || ""));
-    this.socket.addEventListener("message", ({ data }) => this.onMessage(data));
+    this.socket.addEventListener("message", this.onMessage);
     this.socket.addEventListener("close", this.onSocketClose);
+    this.socket.addEventListener("error", this.onSocketClose);
   }
 
   private async visibilityHandler() {
@@ -317,6 +320,11 @@ export class ControlsClient {
       return;
     }
 
+    this.socket?.removeEventListener("message", this.onMessage);
+    this.socket?.removeEventListener("close", this.onSocketClose);
+    this.socket?.removeEventListener("error", this.onSocketClose);
+
+    console.warn("Footron socket closed, attempting to reconnect in 1s");
     // Status is idle, loading, or open, so we'll retry opening the socket
     // after a delay to avoid spamming the server
     setTimeout(this.openSocket, 1000);
@@ -624,7 +632,7 @@ export class ControlsClient {
     }
   }
 
-  private onMessage(data: string) {
+  private onMessage({ data }: { data: string }) {
     const message = ControlsClient.parseMessage(data);
 
     if (message.type == MessageType.Access) {
