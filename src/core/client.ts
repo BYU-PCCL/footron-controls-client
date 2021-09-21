@@ -183,6 +183,7 @@ export class ControlsClient {
     this.onSocketClose = this.onSocketClose.bind(this);
     this.openSocket = this.openSocket.bind(this);
     this.sendMessage = this.sendMessage.bind(this);
+    this.onMessage = this.onMessage.bind(this);
     this.addMessageListener = this.addMessageListener.bind(this);
     this.removeMessageListener = this.removeMessageListener.bind(this);
     this.addStatusListener = this.addStatusListener.bind(this);
